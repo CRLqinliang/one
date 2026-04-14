@@ -11,7 +11,7 @@ class RenderModel:
     """
     rotmat and pos of model is for transforming local geometries
     it is intended to be immutable after creation.
-    runtime pose updates must go through SceneObject.node.
+    runtime pose updates must go through the owning SceneObject.
     """
 
     def __init__(self,
@@ -49,7 +49,8 @@ class RenderModel:
         if self.geom.fs is None:
             # do not cache point cloud buffers
             if self._vrgbs is None:
-                raise ValueError("PointCloudBuffer requires per-vertex rgb colors")
+                raise ValueError(
+                    "PointCloudBuffer requires per-vertex rgb colors")
             return ovdb.PointCloudBuffer(
                 self.geom.vs, self._vrgbs)
         gid = id(self.geom)

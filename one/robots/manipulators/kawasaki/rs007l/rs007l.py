@@ -177,14 +177,16 @@ if __name__ == "__main__":
     ) @ oum.rotmat_from_axangle(ouc.StandardAxis.Y, oum.pi)
     ossop.frame(pos=tgt_pos, rotmat=tgt_rotmat).attach_to(base.scene)
 
-    # all_qs = robot.ik_tcp(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos, max_solutions=8)
+    # all_qs = robot.ik_tcp(tgt_rotmat=tgt_rotmat,
+    #                       tgt_pos=tgt_pos, max_solutions=8)
     # for qs in all_qs:
     #     tmp_robot = robot.clone()
     #     tmp_robot.fk(qs=qs)
     #     tmp_robot.attach_to(base.scene)
     # test ik to nearest solution
     prev_qs = np.zeros(6)
-    qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rotmat, tgt_pos=tgt_pos, ref_qs=prev_qs)
+    qs = robot.ik_tcp_nearest(tgt_rotmat=tgt_rotmat,
+                              tgt_pos=tgt_pos, ref_qs=prev_qs)
     if qs is not None:
         print("Found IK solution:", qs)
         tmp_robot = robot.clone()

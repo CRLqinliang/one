@@ -5,7 +5,7 @@ import one.scene.scene_node as ossn
 import one.scene.collision_shape as osc
 
 
-class SceneObject:
+class SceneObject(ossn.SceneNode):
 
     @classmethod
     def from_file(cls, path, scale=None,  # scale applied during loading
@@ -24,25 +24,47 @@ class SceneObject:
         return instance
 
     def __init__(self, collision_type=None, is_free=False):
+        super().__init__()
         self.file_path = None
-        self.node = ossn.SceneNode()
         self.visuals = []
         self.collisions = []
         self.toggle_render_collision = False
-        # self.scene = None # TODO: do we need to track the affiliated scene?
         self._inrtmat = None
         self._com = None
         self._mass = None
         self._is_free = is_free
-        self._collision_type = collision_type  # None means no auto collider generation
+        self._collision_type = collision_type
+        # _collision_type = None: no auto collider generation
         self._update_collision_group()
         self._collision_affinity_override = None
 
-    def attach_to(self, scene):
-        scene.add(self)
+    def attach_to(self, target):
+        """Attach to a Scene, or to another SceneObject/Link/MechBase as a
+        child node. In the latter case this object is reparented so it follows
+        the host; the local pose is interpreted relative to the host."""
+        from one.scene.scene import Scene
+        from one.robots.base.mech_base import MechBase
+        if isinstance(target, Scene):
+            target.add(self)
+        elif isinstance(target, MechBase):
+            # MechBase has no node; default to the last runtime link (flange)
+            self.attach_to(target.runtime_lnks[-1])
+        elif isinstance(target, SceneObject):
+            self.set_parent(target)
+        else:
+            raise TypeError(f"Unsupported attach target: {type(target)}")
 
-    def detach_from(self, scene):
-        scene.remove(self)
+    def detach_from(self, target):
+        from one.scene.scene import Scene
+        from one.robots.base.mech_base import MechBase
+        if isinstance(target, Scene):
+            target.remove(self)
+        elif isinstance(target, MechBase):
+            self.detach_from(target.runtime_lnks[-1])
+        elif isinstance(target, SceneObject):
+            self.set_parent(None)
+        else:
+            raise TypeError(f"Unsupported detach target: {type(target)}")
 
     def add_visual(self, model, auto_make_collision=True):
         self.visuals.append(model)
@@ -51,9 +73,6 @@ class SceneObject:
 
     def add_collision(self, model):
         self.collisions.append(model)
-
-    def set_rotmat_pos(self, rotmat=None, pos=None):
-        self.node.set_rotmat_pos(rotmat, pos)
 
     def clone(self, postfix="(clone)"):
         """DOES NOT clone the affiliated scene."""
@@ -102,34 +121,6 @@ class SceneObject:
     def is_free(self, flag):
         self._is_free = flag
         self._update_collision_group()
-
-    @property
-    def quat(self):
-        return self.node.quat
-
-    @property
-    def pos(self):
-        return self.node.pos
-
-    @pos.setter
-    def pos(self, value):
-        self.node.pos = value
-
-    @property
-    def rotmat(self):
-        return self.node.rotmat
-
-    @rotmat.setter
-    def rotmat(self, value):
-        self.node.rotmat = value
-
-    @property
-    def tf(self):
-        return self.node.tf
-
-    @tf.setter
-    def tf(self, value):
-        self.node.tf = value
 
     @property
     def rgb(self):
