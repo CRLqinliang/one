@@ -203,9 +203,10 @@ class MJOneConverter:
 
     def _collect_mounted_children(self, mecba):
         for m in mecba._mountings.values():
-            self._mounted_children.add(m.child)
-            if isinstance(m.child, orbmb.MechBase):  # TODO type is not the standdard
-                self._collect_mounted_children(m.child)
+            child = m.child
+            self._mounted_children.add(child)
+            if getattr(child, '_mountings', None):
+                self._collect_mounted_children(child)
 
     def _attach_mountings(self, mecba):
         for m in mecba._mountings.values():

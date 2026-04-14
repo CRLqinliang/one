@@ -27,11 +27,13 @@ class World(pyglet.window.Window):
         display = pyglet.display.get_display()
         screen = display.get_default_screen()
         screen_w, screen_h = screen.width, screen.height
-        win_w, win_h = (screen_w * 8 // 10, screen_h * 8 // 10) if win_size is None else win_size
+        win_w, win_h = (screen_w * 8 // 10, screen_h * 8 //
+                        10) if win_size is None else win_size
         super().__init__(win_w, win_h, config=config, resizable=True)
         self.set_location((screen_w - win_w) // 2, (screen_h - win_h) // 2)
         self.set_caption("WRS World")
-        self.camera = ovc.Camera(pos=cam_pos, look_at=cam_lookat_pos, aspect=win_w / win_h)
+        self.camera = ovc.Camera(
+            pos=cam_pos, look_at=cam_lookat_pos, aspect=win_w / win_h)
         self.render = ovr.Render(camera=self.camera)
         # self.render_target = rt.RenderTarget(width=width, height=height)
         self.scene = osc.Scene()

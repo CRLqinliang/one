@@ -166,8 +166,27 @@ class FR3(ormmb.ManipulatorBase):
         super().__init__(
             rotmat=rotmat,
             pos=pos,
-            home_qs=[0.0, -np.pi / 4, 0.0, -3 * np.pi / 4, 0.0, np.pi / 2, np.pi / 4],
+            home_qs=[0.0, -np.pi / 4, 0.0,
+                     -3 * np.pi / 4, 0.0, np.pi / 2,
+                     np.pi / 4],
         )
+        # link7 -> link8 (flange) fixed offset: +0.107 m along z
+        self._loc_flange_tf = oum.tf_from_rotmat_pos(pos=(0.0, 0.0, 0.107))
+
+
+def fr3_with_hand(rotmat=None, pos=None, jaw_width=0.08):
+    """Convenience factory: FR3 arm with the stock Franka Hand attached."""
+    from one.robots.end_effectors.fr3_gripper.fr3_gripper import FR3Gripper
+
+    arm = FR3(rotmat=rotmat, pos=pos)
+    hand = FR3Gripper()
+    hand.set_jaw_width(jaw_width)
+    # panda_hand_joint: hand rotated -pi/4 about Z relative to link7
+    engage_tf = oum.tf_from_rotmat_pos(
+        rotmat=oum.rotmat_from_euler(0, 0, -np.pi / 4)
+    )
+    arm.engage(hand, engage_tf=engage_tf)
+    return arm, hand
 
 
 if __name__ == "__main__":
@@ -176,9 +195,12 @@ if __name__ == "__main__":
     import one.scene.scene_object_primitive as ossop
 
     base = ovw.World(cam_pos=[2.0, 1.0, 1.0], cam_lookat_pos=[0.0, 0.0, 0.5])
-    robot = FR3()
+    arm, hand = fr3_with_hand()
     builtins.base = base
-    builtins.robot = robot
-    robot.attach_to(base.scene)
+    builtins.arm = arm
+    builtins.hand = hand
+    arm.attach_to(base.scene)
     ossop.frame().attach_to(base.scene)
+    arm.toggle_tcp()
+
     base.run()

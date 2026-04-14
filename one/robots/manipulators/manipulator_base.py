@@ -9,10 +9,12 @@ class ManipulatorBase(orbmb.MechBase):
         compiled = self.structure._compiled
         if len(compiled.tip_lnks) != 1:
             raise ValueError("ManipulatorBase must have a single tip.")
-        super().__init__(rotmat=rotmat, pos=pos, home_qs=home_qs, is_free=is_free)
+        super().__init__(rotmat=rotmat, pos=pos,
+                         home_qs=home_qs, is_free=is_free)
         self._loc_flange_tf = np.eye(4, dtype=np.float32)
         self._loc_tcp_tf = np.eye(4, dtype=np.float32)
-        self._chain = self.structure.get_chain(compiled.root_lnk, compiled.tip_lnks[0])
+        self._chain = self.structure.get_chain(compiled.root_lnk,
+                                               compiled.tip_lnks[0])
         self._solver = self.get_solver(self._chain)
 
     def engage(self, ee, engage_tf=None, update=True, auto_tcp=True):
@@ -78,7 +80,8 @@ class ManipulatorBase(orbmb.MechBase):
         new._loc_flange_tf = self._loc_flange_tf.copy()
         new._loc_tcp_tf = self._loc_tcp_tf.copy()
         new._chain = new.structure.get_chain(
-            self.structure.compiled.root_lnk, self.structure.compiled.tip_lnks[0]
+            self.structure.compiled.root_lnk,
+            self.structure.compiled.tip_lnks[0]
         )
         new._solver = new.get_solver(new._chain)
         return new
@@ -91,8 +94,28 @@ class ManipulatorBase(orbmb.MechBase):
     def gl_tcp_tf(self):
         return self.gl_flange_tf @ self._loc_tcp_tf
 
+    def toggle_tcp(self, color_mat=None, **kwargs):
+        """Toggle a TCP coordinate frame attached to the flange link.
+        First call shows it (follows the robot automatically); second call
+        removes it. Returns the frame sobj when shown, else None."""
+        import one.utils.constant as ouc
+        import one.scene.scene_object_primitive as ossop
+        flange_lnk = self.runtime_lnks[-1]
+        if getattr(self, "_tcp_frame", None) is not None:
+            self._tcp_frame.detach_from(flange_lnk)
+            self._tcp_frame = None
+            return None
+        if color_mat is None:
+            color_mat = ouc.CoordColor.MYC
+        loc_tcp_tf = self._loc_flange_tf @ self._loc_tcp_tf
+        f = ossop.frame_from_tf(loc_tcp_tf, color_mat=color_mat, **kwargs)
+        f.attach_to(flange_lnk)
+        self._tcp_frame = f
+        return f
+
     def mount(self, *args, **kwargs):
         """turn off mount() to avoid confusion"""
         raise RuntimeError(
-            "Manipulator.mount() is disabled. " "Use engage(child, engage_tf) instead."
+            "Manipulator.mount() is disabled. " 
+            "Use engage(child, engage_tf) instead."
         )

@@ -10,20 +10,28 @@ import one.robots.base.kine.kinematic_chain as orbkkc
 
 class Link(osso.SceneObject):
 
-    def __init__(self, collision_type=None,
-                 is_free=False):
-        super().__init__(collision_type=collision_type,
-                         is_free=is_free)
+    def __init__(self, collision_type=None, is_free=False):
+        super().__init__(collision_type=collision_type, is_free=is_free)
 
     def _update_collision_group(self):
         """override to use unique collision group"""
         self._collision_group = ouc.CollisionGroup.ROBOT
 
+
 class Joint:
 
-    def __init__(self, jnt_type, parent_lnk, child_lnk,
-                 axis, rotmat=None, pos=None,
-                 mmc=None, lmt_lo=None, lmt_up=None):
+    def __init__(
+        self,
+        jnt_type,
+        parent_lnk,
+        child_lnk,
+        axis,
+        rotmat=None,
+        pos=None,
+        mmc=None,
+        lmt_lo=None,
+        lmt_up=None,
+    ):
         self.jtype = jnt_type
         self.ax = oum.unit_vec(axis, return_length=False)
         self.rotmat = oum.ensure_rotmat(rotmat)
@@ -138,7 +146,8 @@ class MechStruct:
     @property
     def compiled(self):
         if self._compiled is None:
-            raise RuntimeError("MechStruct not compiled yet. Call compile() first.")
+            raise RuntimeError(
+                "MechStruct not compiled yet. Call compile() first.")
         return self._compiled
 
 
@@ -182,7 +191,8 @@ class FlatMechStructure:
         self.ancestor_jnt_ids = self._build_ancestor_cache()
         # active joint mask
         self.active_jnt_ids_mask = np.ones(self.n_jnts, dtype=bool)
-        self.active_jnt_ids_mask[self.jtypes_by_idx == ouc.JntType.FIXED] = False
+        self.active_jnt_ids_mask[
+            self.jtypes_by_idx == ouc.JntType.FIXED] = False
         self.active_jnt_ids_mask[self.mmc_src_by_idx >= 0] = False
         self.n_active_jnts = int(np.sum(self.active_jnt_ids_mask))
         # traversal order (O(n) FK)
@@ -192,7 +202,10 @@ class FlatMechStructure:
         q_resolved = np.asarray(qs, dtype=np.float32).copy()
         mask = self.mmc_src_by_idx >= 0
         src = self.mmc_src_by_idx[mask]
-        q_resolved[mask] = self.mmc_mult_by_idx[mask] * q_resolved[src] + self.mmc_offset_by_idx[mask]
+        q_resolved[mask] = (
+            self.mmc_mult_by_idx[mask] * q_resolved[src] +
+            self.mmc_offset_by_idx[mask]
+        )
         return q_resolved
 
     def is_active_jnt(self, jnt_idx):
@@ -227,7 +240,8 @@ class FlatMechStructure:
     def _find_root_idx(self):
         roots = np.where(self.plidx_of_lidx < 0)[0]
         if roots.size != 1:
-            raise RuntimeError(f"Mechanism can only have one root, got {roots.size}")
+            raise RuntimeError(
+                f"Mechanism can only have one root, got {roots.size}")
         return int(roots[0])
 
     def _find_tip_inds(self):

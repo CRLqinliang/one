@@ -72,24 +72,31 @@ class MechBase:
         self.fk()
 
     def fk(self, qs=None):
+        compiled = self._compiled
         if qs is not None:
-            if len(qs) == len(self.qs):
+            n_qs = len(qs)
+            if n_qs == len(self.qs):
                 self.qs[:] = qs
+            elif n_qs == compiled.n_active_jnts:
+                self.qs[compiled.active_jnt_ids_mask] = qs
             else:
-                raise ValueError(f"Expected {len(self.qs)} qs, got {qs}")
-        q_resolved = self._compiled.resolve_all_qs(self.qs)  # TODO: should this be active only?
-        rlidx = self._compiled.root_lnk_idx
+                raise ValueError(
+                    f'Expected {len(self.qs)} full qs or '
+                    f'{compiled.n_active_jnts} active qs, got {n_qs}'
+                )
+        q_resolved = compiled.resolve_all_qs(self.qs)
+        rlidx = compiled.root_lnk_idx
         self.gl_lnk_tfarr[rlidx][:3, :3] = self._rotmat
         self.gl_lnk_tfarr[rlidx][:3, 3] = self._pos
         # traversal
-        for lidx in self._compiled.lnk_ids_traversal_order:
+        for lidx in compiled.lnk_ids_traversal_order:
             if lidx == rlidx:
                 continue
-            plidx = self._compiled.plidx_of_lidx[lidx]
-            pjidx = self._compiled.pjidx_of_lidx[lidx]
+            plidx = compiled.plidx_of_lidx[lidx]
+            pjidx = compiled.pjidx_of_lidx[lidx]
             jnt = self.structure.jnts[pjidx]
             plnk_tfmat = self.gl_lnk_tfarr[plidx]
-            jtfq = (self._compiled.jtf0_by_idx[pjidx] @
+            jtfq = (compiled.jtf0_by_idx[pjidx] @
                     jnt.motion_tf(q_resolved[pjidx]))
             self.gl_lnk_tfarr[lidx] = plnk_tfmat @ jtfq
         self._update_runtime()
@@ -137,7 +144,7 @@ class MechBase:
             lnk: i for i, lnk in enumerate(new.runtime_lnks)}
         new.gl_lnk_tfarr = self.gl_lnk_tfarr.copy()
         new._mountings = {}
-        new._solvers=self._solvers # solvers can be shared
+        new._solvers = self._solvers  # solvers can be shared
         for k, m in self._mountings.items():
             child = m.child.clone()
             plidx = self.runtime_lidx_map[m.plnk]

@@ -18,7 +18,7 @@ def ray_shoot_scene_object(scene_obj, orig, direction):
         hit_pos, hit_n, hit_t, hit_cid, hit_fid
         (all numpy arrays, sorted by hit_t). Returns None if no hit.
     """
-    node_tf = scene_obj.node.wd_tf
+    node_tf = scene_obj.wd_tf
     all_pos = []
     all_n = []
     all_t = []

@@ -59,7 +59,7 @@ class Render:
                     target = groups["pcd"]
                 if device_buffer.vao not in target:
                     target[device_buffer.vao] = []
-                target[device_buffer.vao].append((model, sobj.node))
+                target[device_buffer.vao].append((model, sobj))
             if sobj.toggle_render_collision:
                 for c in sobj.collisions:
                     model = c.to_render_model()
@@ -73,7 +73,7 @@ class Render:
                         target = groups["pcd"]
                     if device_buffer.vao not in target:
                         target[device_buffer.vao] = []
-                    target[device_buffer.vao].append((model, sobj.node))
+                    target[device_buffer.vao].append((model, sobj))
         return groups
 
     def _draw_outlined_mesh(self, opaque_group, cam_view, cam_proj):
